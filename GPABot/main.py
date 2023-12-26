@@ -279,8 +279,6 @@ async def remove_user(ctx):
         await ctx.send("User does not exist. To add a user, type '$addUser'.")
 
 
-bot.run(os.getenv('TOKEN'))
+if __name__ ==  "__main__":
+    bot.run(os.getenv('TOKEN'))
 
-# wanted features:
-
-#1. overall grade (all courses)
