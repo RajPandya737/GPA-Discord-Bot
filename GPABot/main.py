@@ -4,6 +4,7 @@ import dotenv
 import os
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import shlex
 
 dotenv.load_dotenv()
 
@@ -20,6 +21,11 @@ collection = database[collection_name]
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='$', intents=intents)
 
+@bot.event
+async def on_message(message):
+    if bot.user.mention in message.content:
+        await message.channel.send("Commands: \n $addUser \n $addCourse \'COURSE\' \n $removeCourse \'COURSE\' \n $addAssignment \'COURSE\', \'ASSIGNMENT\', \'GRADE\', \'WEIGHT\' \n $removeAssignment \'COURSE\', \'ASSIGNMENT\' \n $removeAllCourses \n $gpa \n $wantedGPA \'COURSE\', \'GRADE\' \n $listCourses \n $listAssignments \'COURSE\' \n $removeUser")
+
 @bot.command(name='addUser')
 async def addUser(ctx):
     user_id = ctx.author.id
@@ -28,13 +34,14 @@ async def addUser(ctx):
     if not user_exists:
         new_entry = {"userid": user_id}
         collection.insert_one(new_entry)
-        await ctx.send(f"You have been added!")
+        await ctx.send(f"You have been added!".format(ctx.author.mention))
     else:
-        await ctx.send(f"You already exist in the collection!")
+        await ctx.send(f"You already exist in the collection!".format(ctx.author.mention))
         
         
 @bot.command(name='addCourse')
-async def add_course(ctx, course):
+async def add_course(ctx, *args):
+    course = ' '.join(args)
     user_id = ctx.author.id
 
     user_exists = collection.find_one({"userid": user_id})
@@ -51,14 +58,15 @@ async def add_course(ctx, course):
                 {"$set": {"courses": user_exists['courses'], course: {}}}
             )
 
-            await ctx.send(f"Course '{course}' added to your profile.")
+            await ctx.send(f"Course '{course}' added to your profile.".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' already exists in your profile.")
+            await ctx.send(f"Course '{course}' already exists in your profile.".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, call '$addUser'.")
+        await ctx.send("User does not exist. To add a user, call '$addUser'.".format(ctx.author.mention))
 
 @bot.command(name='removeCourse')
-async def remove_course(ctx, course):
+async def remove_course(ctx, *args):
+    course = ' '.join(args)
     user_id = ctx.author.id
     user_exists = collection.find_one({"userid": user_id})
     if user_exists:
@@ -69,16 +77,18 @@ async def remove_course(ctx, course):
 
             try:
                 collection.update_one({"userid": user_id}, {"$set": {"courses": courses}})
-                await ctx.send(f"Course '{course}' removed from your profile.")
+                await ctx.send(f"Course '{course}' removed from your profile.".format(ctx.author.mention))
             except Exception as e:
-                await ctx.send(f"Error updating document: {e}")
+                await ctx.send(f"Error updating document: {e}".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist in your profile.")
+            await ctx.send(f"Course '{course}' does not exist in your profile.".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, call '$addUser'.")
+        await ctx.send("User does not exist. To add a user, call '$addUser'.".format(ctx.author.mention))
 
 @bot.command(name='addAssignment')
-async def add_assignment(ctx, course, assignment, grade, weight):
+async def add_assignment(ctx, *args ):
+    vars = ' '.join(args).split(',')    
+    course, assignment, grade, weight = list(map(lambda x: x.strip(), vars))
     user_id = ctx.author.id
 
     user_exists = collection.find_one({"userid": user_id})
@@ -93,17 +103,19 @@ async def add_assignment(ctx, course, assignment, grade, weight):
                 {"$set": {f"{course}.{assignment}": {'grade': grade, 'weight': weight}}}
             )
 
-            await ctx.send(f"Assignment '{assignment}' added to the '{course}' course")
+            await ctx.send(f"Assignment '{assignment}' added to the '{course}' course".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist. To add a course, type '$addCourse'")
+            await ctx.send(f"Course '{course}' does not exist. To add a course, type '$addCourse'".format(ctx.author.mention))
     else:
-        await ctx.send(f"User does not exist. To add a user, type '$addUser'.")
+        await ctx.send(f"User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
 
 
 
 
 @bot.command(name='removeAssignment')
-async def remove_assignment(ctx, course, assignment):
+async def remove_assignment(ctx, *args):
+    vars = ' '.join(args).split(',')    
+    course, assignment = list(map(lambda x: x.strip(), vars))
     user_id = ctx.author.id
 
     user_exists = collection.find_one({"userid": user_id})
@@ -121,16 +133,17 @@ async def remove_assignment(ctx, course, assignment):
                     {"$unset": {f"{course}.{assignment}": ""}}
                 )
 
-                await ctx.send(f"Assignment '{assignment}' removed for {course} ")
+                await ctx.send(f"Assignment '{assignment}' removed for {course} ".format(ctx.author.mention))
             else:
-                await ctx.send(f"Assignment '{assignment}' does not exist for {course}")
+                await ctx.send(f"Assignment '{assignment}' does not exist for {course}".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist. To add a course, type '$addCourse'")
+            await ctx.send(f"Course '{course}' does not exist. To add a course, type '$addCourse'".format(ctx.author.mention))
     else:
-        await ctx.send(f"User does not exist. To add a user, type '$addUser'.")
+        await ctx.send(f"User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
 
 @bot.command(name='removeAllAssignments')
-async def remove_all_assignments(ctx, course):
+async def remove_all_assignments(ctx, *args):
+    course = ' '.join(args)
     user_id = ctx.author.id
     user_exists = collection.find_one({"userid": user_id})
 
@@ -140,13 +153,13 @@ async def remove_all_assignments(ctx, course):
             user_exists[course] = {}  
             try:
                 collection.update_one({"userid": user_id}, {"$unset": {f"{course}": ""}})
-                await ctx.send(f"All assignments removed for '{course}'.")
+                await ctx.send(f"All assignments removed for '{course}'.".format(ctx.author.mention))
             except Exception as e:
-                await ctx.send(f"Error updating document: {e}")
+                await ctx.send(f"Error updating document: {e}".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist.")
+            await ctx.send(f"Course '{course}' does not exist.".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, type '$addUser'.")
+        await ctx.send("User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
 
 
 def convert_to_12_scale(percentage):
@@ -178,8 +191,9 @@ def convert_to_12_scale(percentage):
         return 0
     
     
-@bot.command(name='calculateGrade')
-async def calculate_grade(ctx, course):
+@bot.command(name='gpa')
+async def calculate_grade(ctx, *args):
+    course = ' '.join(args)
     user_id = ctx.author.id
     user_exists = collection.find_one({"userid": user_id})
 
@@ -199,22 +213,24 @@ async def calculate_grade(ctx, course):
             if total_weight > 0:
                 average_grade = total_weighted_grade / total_weight
                 grade_message = f"Calculated average grade for '{course}': {average_grade:.2f} ({convert_to_12_scale(average_grade)})"
-                await ctx.send(grade_message)
-                return average_grade
+                await ctx.send(f"{grade_message}".format(ctx.author.mention))
             else:
-                await ctx.send(f"No assignments with weights found for '{course}'.")
-                return None
+                await ctx.send(f"No assignments with weights found for '{course}'.".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist.")
-            return None
+            await ctx.send(f"Course '{course}' does not exist.".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, type '$addUser'")
+        await ctx.send("User does not exist. To add a user, type '$addUser'".format(ctx.author.mention))
         return None
 
+@bot.command(name='commands')
+async def help(ctx):
+    await ctx.send("Commands: \n $addUser \n $addCourse \'COURSE\' \n $removeCourse \'COURSE\' \n $addAssignment \'COURSE\', \'ASSIGNMENT\', \'GRADE\', \'WEIGHT\' \n $removeAssignment \'COURSE\', \'ASSIGNMENT\' \n $removeAllCourses \n $gpa \n $wantedGPA \'COURSE\', \'GRADE\' \n $listCourses \n $listAssignments \'COURSE\' \n $removeUser".format(ctx.author.mention))
 
-
-@bot.command(name='wantedGrade')
-async def wanted_grade(ctx, course, target_grade):
+@bot.command(name='wantedGPA')
+async def wanted_grade(ctx, *args):
+    vars = ' '.join(args).split(',')
+    course, target_grade = list(map(lambda x: x.strip(), vars))
+    target_grade = float(target_grade)
     user_id = ctx.author.id
     user_exists = collection.find_one({"userid": user_id})
 
@@ -227,15 +243,15 @@ async def wanted_grade(ctx, course, target_grade):
             for assignment, details in assignments.items():
                 grade = details.get('grade', 0)
                 weight = details.get('weight', 0)
-                total_weighted_grade += grade * weight
-                total_weight += weight
+                total_weighted_grade += float(grade) * float(weight)
+                total_weight += float(weight)
 
             remaining_grade = round((float(target_grade) * 100 - total_weighted_grade) / (100 - total_weight), 2)
-            await ctx.send(f"Remaining grade needed for '{course}' to achieve a target grade of {target_grade}: {remaining_grade}")
+            await ctx.send(f"Remaining grade needed for '{course}' to achieve a target grade of {target_grade}: {remaining_grade}".format(ctx.author.mention))
         else:
-            await ctx.send(f"Course '{course}' does not exist.")
+            await ctx.send(f"Course '{course}' does not exist.".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, type '$addUser'.")
+        await ctx.send("User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
         
 @bot.command(name='listCourses')
 async def list_courses(ctx):
@@ -245,9 +261,27 @@ async def list_courses(ctx):
     if user_exists:
         courses = user_exists.get('courses', [])
         if len(courses) > 0:
-            await ctx.send(f"Your courses are: {', '.join(courses)}")
+            await ctx.send(f"Your courses are: {', '.join(courses)}".format(ctx.author.mention))
         else:
-            await ctx.send("You have no courses.")
+            await ctx.send("You have no courses.".format(ctx.author.mention))
+            
+@bot.command(name='listAssignments')
+async def list_assignments(ctx, *args):
+    course = ' '.join(args)
+    user_id = ctx.author.id
+    user_exists = collection.find_one({"userid": user_id})
+    
+    if user_exists:
+        courses = user_exists.get('courses', [])
+        if course in courses:
+            assignments = user_exists[course]
+            if len(assignments) > 0:
+                for assignment in assignments:
+                    await ctx.send(f"{assignment} - {assignments[assignment]['grade']}% - {assignments[assignment]['weight']}%".format(ctx.author.mention))
+            else:
+                await ctx.send("You have no assignments.".format(ctx.author.mention))
+        else:
+            await ctx.send("You do not have this courses. To see your courses, type '$listCourses'.".format(ctx.author.mention))
             
             
 @bot.command(name='removeAllCourses')
@@ -258,11 +292,13 @@ async def remove_all_courses(ctx):
     if user_exists:
         try:
             collection.update_one({"userid": user_id}, {"$unset": {"courses": ""}})
-            await ctx.send("All courses removed for the user.")
+            await ctx.send("All courses removed for the user.".format(ctx.author.mention))
         except Exception as e:
-            await ctx.send(f"Error updating document: {e}")
+            await ctx.send(f"Error updating document: {e}".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, type '$addUser'.")
+        await ctx.send("User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
+
+        
 
 @bot.command(name='removeUser')
 async def remove_user(ctx):
@@ -272,11 +308,11 @@ async def remove_user(ctx):
     if user_exists:
         try:
             collection.delete_one({"userid": user_id})
-            await ctx.send("User removed from the database.")
+            await ctx.send("User removed from the database.".format(ctx.author.mention))
         except Exception as e:
-            await ctx.send(f"Error deleting document: {e}")
+            await ctx.send(f"Error deleting document: {e}".format(ctx.author.mention))
     else:
-        await ctx.send("User does not exist. To add a user, type '$addUser'.")
+        await ctx.send("User does not exist. To add a user, type '$addUser'.".format(ctx.author.mention))
 
 
 if __name__ ==  "__main__":
