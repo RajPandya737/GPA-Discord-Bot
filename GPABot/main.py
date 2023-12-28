@@ -220,7 +220,7 @@ async def calculate_grade(ctx, *args):
 
 @bot.command(name='commands')
 async def help(ctx):
-    await ctx.send("Commands: \n $addUser \n $addCourse \'COURSE\' \n $removeCourse \'COURSE\' \n $addAssignment \'COURSE\', \'ASSIGNMENT\', \'GRADE\', \'WEIGHT\' \n $removeAssignment \'COURSE\', \'ASSIGNMENT\' \n $removeAllCourses \n $gpa \n $wantedGPA \'COURSE\', \'GRADE\' \n $listCourses \n $listAssignments \'COURSE\' \n $removeUser".format(ctx.author.mention))
+    await ctx.send("Commands: \n $addUser \n $addCourse \'COURSE\' \n $removeCourse \'COURSE\' \n $addAssignment \'COURSE\', \'ASSIGNMENT\', \'GRADE\', \'WEIGHT\' \n $removeAssignment \'COURSE\', \'ASSIGNMENT\' \n $removeAllCourses \n $gpa 'COURSE' \n $wantedGPA \'COURSE\', \'GRADE\' \n $listCourses \n $listAssignments \'COURSE\' \n $removeUser \n\n Note: You do not need to enclose arguments in quotes".format(ctx.author.mention))
 
 @bot.command(name='wantedGPA')
 async def wanted_grade(ctx, *args):
