@@ -4,7 +4,6 @@ import dotenv
 import os
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-import shlex
 
 dotenv.load_dotenv()
 
@@ -19,12 +18,9 @@ collection = database[collection_name]
 
 
 intents = discord.Intents.all()
+intents.members = True
 bot = commands.Bot(command_prefix='$', intents=intents)
 
-@bot.event
-async def on_message(message):
-    if bot.user.mention in message.content:
-        await message.channel.send("Commands: \n $addUser \n $addCourse \'COURSE\' \n $removeCourse \'COURSE\' \n $addAssignment \'COURSE\', \'ASSIGNMENT\', \'GRADE\', \'WEIGHT\' \n $removeAssignment \'COURSE\', \'ASSIGNMENT\' \n $removeAllCourses \n $gpa \n $wantedGPA \'COURSE\', \'GRADE\' \n $listCourses \n $listAssignments \'COURSE\' \n $removeUser")
 
 @bot.command(name='addUser')
 async def addUser(ctx):
