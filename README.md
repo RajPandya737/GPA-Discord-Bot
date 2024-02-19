@@ -1,6 +1,6 @@
 # GPA Discord Bot
 
-Ever want to know what your GPA is without having to track every single assignment and grade? Well now you can with the GPA Discord Bot! This bot will calculate your GPA based on the grades you input. This bot is perfect for students who want to know what their GPA is or what they need to get in the future to achieve a certain GPA. To add the bot to your server, click [here](https://discord.com/oauth2/authorize?client_id=1188281911014076416&permissions=1099981390848&scope=bot).
+Ever want to know what your GPA is without having to track every single assignment and grade? Well now you can with the GPA Discord Bot! This bot will calculate your GPA based on the grades you input. This bot is perfect for students who want to know what their GPA is or what they need to get in the future to achieve a certain GPA. Note: This bot is no longer in operation.
 
 ## Commands and Usage
 
